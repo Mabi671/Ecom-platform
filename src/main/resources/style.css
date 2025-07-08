@@ -1,0 +1,12 @@
+.label, .text, .button, .text-field, .text-area {
+    -fx-font-size: 14px;
+    -fx-font-family: "Arial";
+    -fx-text-fill: #4d3664;
+    -fx-font-weight: bold;
+}
+.text, .button, .text-field, .text-area{
+    -fx-background-color: linear-gradient(#81FBB8, #28C76F);
+}
+.button{
+    -fx-background-color: linear-gradient(#00b7c2, #4ef037);
+}
