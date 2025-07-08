@@ -1,0 +1,3 @@
+curl -X POST localhost:8080/user/add -H "Content-Type:
+application/json" -d "{\"name\":\"Karol\", \"email\":\"karol.karol@karol.com\", \"password\":\"legia1923\"}"
+curl -X POST localhost:8080/products/add -H "Content-Type: application/json" -d "{\"name\":\"Book\", \"description\":\"some description\", \"price\":19.99}"
