@@ -468,7 +468,7 @@ public class Main extends Application {
         price.setEditable(false);
         Image img = new Image("file:"+data[4]);
         if (img.isError()){
-            img = new Image("file:src/main/resources/tapejty/1.jpg");
+            img = new Image("file:src/main/resources/images/1.jpg");
         }
         ImageView imgView = new ImageView(img);
         imgView.setFitHeight(150);
@@ -528,7 +528,7 @@ public class Main extends Application {
                     name,
                     description,
                     String.valueOf(number),
-                    "tapejty/1.jpg"
+                    "images/1.jpg"
             };
 
             products.add(entry);
