@@ -10,12 +10,10 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 @RestController
 public class RootController {
 
-	@GetMapping
-	RepresentationModel<?> index() {
-
+	@GetMapping("/")
+	public RepresentationModel<?> index() {
 		RepresentationModel<?> rootModel = new RepresentationModel<>();
 		rootModel.add(linkTo(methodOn(ProductController.class).all()).withRel("products"));
 		return rootModel;
 	}
-
 }

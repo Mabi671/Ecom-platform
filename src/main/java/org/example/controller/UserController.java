@@ -1,59 +1,66 @@
 package org.example.controller;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.example.dto.RegisterRequest;
+import org.example.dto.UserResponse;
 import org.example.model.Cart;
+import org.example.model.Role;
 import org.example.model.User;
 import org.example.repository.CartRepository;
 import org.example.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
 import java.util.List;
-
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
 @RestController
 @RequestMapping("/user")
 public class UserController {
 
-	private final UserRepository repository;
+	private final UserRepository userRepository;
+	private final CartRepository cartRepository;
+	private final PasswordEncoder passwordEncoder;
 
-	@Autowired
-	private CartRepository cartRepo;
-
-	@Autowired
-	private BCryptPasswordEncoder passwordEncoder;
-
-	UserController(UserRepository repository) {
-
-		this.repository = repository;
+	public UserController(UserRepository userRepository,
+	                      CartRepository cartRepository,
+	                      PasswordEncoder passwordEncoder) {
+		this.userRepository = userRepository;
+		this.cartRepository = cartRepository;
+		this.passwordEncoder = passwordEncoder;
 	}
+
+	/** Admin-only overview of registered users; never exposes password hashes. */
 	@GetMapping("/all")
-	List<String> showAll()
-	{
-		List<String> list = new ArrayList<>();
-		for(User user : repository.findAll()){
-			list.add(user.toString());
-		}
-		return list;
+	public List<UserResponse> allUsers() {
+		return userRepository.findAll().stream()
+				.map(UserResponse::from)
+				.toList();
 	}
+
 	@PostMapping("/user")
-	ResponseEntity<String> createUser(@RequestBody User newUser)
-	{
-		for(User user : repository.findAll()){
-			if (user.getEmail().equals(newUser.getEmail())){
-				return new ResponseEntity<>("Email taken", HttpStatus.CONFLICT);
-			}
+	@Transactional
+	public ResponseEntity<String> register(@RequestBody RegisterRequest request) {
+		if (userRepository.existsByEmail(request.email())) {
+			return new ResponseEntity<>("Email taken", HttpStatus.CONFLICT);
 		}
-		newUser.setPassword(passwordEncoder.encode(newUser.getPassword()));
-        repository.save(newUser);
-		cartRepo.save(new Cart(newUser.getId()));
-		return new ResponseEntity<>("User created", HttpStatus.ACCEPTED);
+		if (userRepository.existsByUsername(request.username())) {
+			return new ResponseEntity<>("Username taken", HttpStatus.CONFLICT);
+		}
+
+		// The role is always USER here; admins are only created through seeding.
+		User user = userRepository.save(new User(
+				request.username(),
+				passwordEncoder.encode(request.password()),
+				request.email(),
+				Role.USER));
+		cartRepository.save(new Cart(user.getId()));
+
+		return new ResponseEntity<>("User created", HttpStatus.CREATED);
 	}
 }

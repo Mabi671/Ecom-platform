@@ -1,70 +1,57 @@
 package org.example.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 
+import java.math.BigDecimal;
+
 @Entity
 public class Product {
 
-	private @Id @GeneratedValue Long id;
+	@Id
+	@GeneratedValue
+	private Long id;
+
+	@Column(nullable = false, unique = true)
 	private String name;
+
+	@Column(length = 2000)
 	private String description;
-	private Float price;
+
+	@Column(nullable = false)
+	private BigDecimal price;
+
 	private String image;
 
-	Product(){}
+	protected Product() {
+	}
 
-	Product(String name, String description, Float price, String image) {
-
+	public Product(String name, String description, BigDecimal price, String image) {
 		this.name = name;
 		this.description = description;
 		this.price = price;
 		this.image = image;
 	}
 
-
 	public Long getId() {
-		return this.id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
+		return id;
 	}
 
 	public String getName() {
-		return this.name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
+		return name;
 	}
 
 	public String getDescription() {
-		return this.description;
+		return description;
 	}
 
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
-	public Float getPrice() {
+	public BigDecimal getPrice() {
 		return price;
-	}
-
-	public void setPrice(Float price) {
-		this.price = price;
 	}
 
 	public String getImage() {
 		return image;
-	}
-
-	public void setImage(String image) {
-		this.image = image;
-	}
-
-	public String[] toArray(){
-		return new String[]{this.getName(), this.getDescription(), this.getPrice().toString(), this.getId().toString(), this.getImage()};
 	}
 }
