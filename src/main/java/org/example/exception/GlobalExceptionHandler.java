@@ -6,11 +6,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
-class UserNotFoundAdvice {
+class GlobalExceptionHandler {
 
-	@ExceptionHandler(UserNotFoundException.class)
+	@ExceptionHandler({CartNotFoundException.class, ProductNotFoundException.class})
 	@ResponseStatus(HttpStatus.NOT_FOUND)
-	String employeeNotFoundHandler(UserNotFoundException ex) {
+	String notFoundHandler(RuntimeException ex) {
 		return ex.getMessage();
 	}
 }

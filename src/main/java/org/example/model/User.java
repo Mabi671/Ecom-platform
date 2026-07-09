@@ -1,28 +1,39 @@
 package org.example.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.Objects;
 
 @Entity
 @Table(name = "users")
 public class User {
-	private @Id @GeneratedValue Long id;
+
+	@Id
+	@GeneratedValue
+	private Long id;
+
+	@Column(nullable = false, unique = true)
 	private String username;
+
+	@Column(nullable = false)
 	private String password;
+
+	@Column(nullable = false, unique = true)
 	private String email;
-	private String role;
 
-	public User() {}
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
+	private Role role;
 
-	public User(String name, String password, String email, String role) {
-		this.username = name;
+	protected User() {
+	}
+
+	public User(String username, String password, String email, Role role) {
+		this.username = username;
 		this.password = password;
 		this.email = email;
 		this.role = role;
@@ -31,38 +42,30 @@ public class User {
 	public Long getId() {
 		return id;
 	}
+
 	public String getUsername() {
-		return this.username;
+		return username;
 	}
-	public String getEmail() {
-		return email;
-	}
+
 	public String getPassword() {
 		return password;
 	}
-	public String getRole() {
-        return role;
+
+	public String getEmail() {
+		return email;
 	}
 
-	public void setPassword(String password){
+	public Role getRole() {
+		return role;
+	}
+
+	public void setPassword(String password) {
 		this.password = password;
 	}
 
 	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		User user = (User) o;
-		return Objects.equals(username, user.username) && Objects.equals(password, user.password) && Objects.equals(email, user.email) && Objects.equals(role, user.role);
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(username, password, email, role);
-	}
-
-	@Override
-	public String toString(){
-		return id + " " + username + ", " + password;
+	public String toString() {
+		// Deliberately excludes the password hash.
+		return "User{id=" + id + ", username='" + username + "', email='" + email + "', role='" + role + "'}";
 	}
 }

@@ -1,68 +1,63 @@
 package org.example.controller;
 
-import io.jsonwebtoken.Jwt;
-import org.example.config.JwtService;
-import org.example.model.Product;
+import org.example.dto.ProductRequest;
+import org.example.dto.ProductRows;
 import org.example.exception.ProductNotFoundException;
+import org.example.model.Product;
+import org.example.repository.CartRepository;
 import org.example.repository.ProductRepository;
-import org.example.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-
-// tag::constructor[]
 @RestController
+@RequestMapping("/products")
 public class ProductController {
 
-	private final ProductRepository repository;
+	private final ProductRepository productRepository;
+	private final CartRepository cartRepository;
 
-	@Autowired
-	private JwtService jwtService;
-
-
-	@Autowired
-	private UserRepository userRepository;
-
-	ProductController(ProductRepository repository) {
-
-		this.repository = repository;
+	public ProductController(ProductRepository productRepository, CartRepository cartRepository) {
+		this.productRepository = productRepository;
+		this.cartRepository = cartRepository;
 	}
 
-	@GetMapping("/products")
-	public ResponseEntity<?> all() {
+	@GetMapping
+	public List<List<String>> all() {
+		return productRepository.findAll().stream()
+				.map(ProductRows::toRow)
+				.toList();
+	}
 
-		List<List<String>> Products = new ArrayList<>();
-		for (Product product : repository.findAll()){
-			Products.add(List.of(product.toArray()));
+	/** Admin-only (enforced in {@code SecurityConfig}). */
+	@PostMapping
+	public ResponseEntity<String> create(@RequestBody ProductRequest request) {
+		if (productRepository.existsByName(request.name())) {
+			return new ResponseEntity<>("Product name taken", HttpStatus.CONFLICT);
 		}
-		return ResponseEntity.ok(Products);
+		productRepository.save(new Product(
+				request.name(), request.description(), request.price(), request.image()));
+		return new ResponseEntity<>("Product created", HttpStatus.CREATED);
 	}
-	@PostMapping("/products")
-	public ResponseEntity<?> newProduct(@RequestBody Product newProduct, @RequestHeader("Authorization") String token) {
-		for(Product product: repository.findAll()){
-			if (product.getName().equals(newProduct.getName())){
-				return new ResponseEntity<>("Product name taken", HttpStatus.CONFLICT);
-			}
+
+	/** Admin-only (enforced in {@code SecurityConfig}). Also removes the product from every cart. */
+	@DeleteMapping("/{id}")
+	@Transactional
+	public ResponseEntity<Void> delete(@PathVariable Long id) {
+		if (!productRepository.existsById(id)) {
+			throw new ProductNotFoundException(id);
 		}
-		repository.save(newProduct);
-		return ResponseEntity.ok(null);
-	}
-	@DeleteMapping("/products/{id}")
-	ResponseEntity<?> deleteProduct(@PathVariable Long id, @RequestHeader("Authorization") String token) {
-		token = token.substring(7);
-		boolean isAdmin = userRepository.findByUsername(jwtService.extractUsername(token)).get().getRole().equals("ADMIN");
-		if(!isAdmin){
-			return ResponseEntity.unprocessableEntity().build();
-		}
-		repository.deleteById(id);
-		return ResponseEntity.ok(null);
+		cartRepository.removeProductFromAllCarts(id);
+		productRepository.deleteById(id);
+		return ResponseEntity.noContent().build();
 	}
 }
